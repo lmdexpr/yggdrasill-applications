@@ -1,0 +1,13 @@
+(library
+  (public_name discord)
+  (name discord)
+  (libraries 
+    uri
+    cohttp-eio
+    https
+    logs
+    yojson
+    hex
+    sodium)
+  (preprocess (pps ppx_yojson_conv))
+)

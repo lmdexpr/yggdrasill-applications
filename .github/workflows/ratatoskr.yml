@@ -1,0 +1,33 @@
+name: Build and push Docker image of ratatoskr
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ratatoskr.opam'
+      - 'ratatoskr/**'
+      - 'lib/**'
+      - 'Dockerfile'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up tag
+        run: echo "TAG=$(date +%s)" >> $GITHUB_ENV
+
+      - name: Build and Push
+        uses: ./.github/actions/build-and-push
+        with:
+          target: ratatoskr
+          tag: ${{ env.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

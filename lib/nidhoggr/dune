@@ -1,0 +1,17 @@
+(library
+  (public_name nidhoggr)
+  (name nidhoggr)
+  (libraries
+    eio 
+    eio_main
+    eio.unix
+    cohttp
+    cohttp-eio
+    http
+    fmt
+    unix
+    logs.fmt
+    logs.threaded
+    discord
+    nextcloud
+  ))
