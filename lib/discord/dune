@@ -3,8 +3,7 @@
   (name discord)
   (libraries 
     uri
-    cohttp-eio
-    https
+    httpx
     logs
     yojson
     hex

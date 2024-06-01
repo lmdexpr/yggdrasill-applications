@@ -1,7 +1,5 @@
 (library
   (public_name nextcloud)
   (name nextcloud)
-  (libraries 
-    cohttp-eio
-    https)
+  (libraries eio httpx logs)
 )

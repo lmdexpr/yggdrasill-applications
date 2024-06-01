@@ -1,0 +1,12 @@
+(library
+  (public_name httpx)
+  (name httpx)
+  (libraries 
+    cohttp-eio
+    tls-eio
+    ca-certs
+    uri
+    http
+    logs
+  )
+)

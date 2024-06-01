@@ -10,15 +10,9 @@ depends: [
   "dune" {>= "3.10" & >= "3.10"}
   "ocaml" {>= "5.1"}
   "eio"
-  "eio_main"
-  "tls-eio"
-  "ca-certs"
-  "mirage-crypto-rng-eio"
-  "cohttp"
-  "cohttp-eio"
   "logs"
   "uri"
-  "http"
+  "httpx"
   "discord"
   "nidhoggr"
   "odoc" {with-doc}

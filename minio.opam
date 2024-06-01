@@ -10,14 +10,11 @@ depends: [
   "dune" {>= "3.10" & >= "3.10"}
   "ocaml" {>= "5.1"}
   "eio"
-  "tls-eio"
-  "ca-certs"
-  "mirage-crypto-rng-eio"
-  "cohttp-eio"
   "yojson"
   "ppx_yojson_conv"
   "logs"
   "ISO8601"
+  "httpx"
   "odoc" {with-doc}
 ]
 build: [

@@ -11,16 +11,18 @@
 (generate_opam_files true)
 
 (package
-  (name https)
-  (synopsis "HTTPS library")
+  (name httpx)
+  (synopsis "HTTP wrapper")
   (depends
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
     tls-eio
     ca-certs
-    mirage-crypto-rng-eio
     cohttp-eio
+    uri
+    http
+    logs
     ))
 
 (package
@@ -30,15 +32,12 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio
-    cohttp-eio
     yojson
     ppx_yojson_conv
     logs
     hex
     sodium
+    httpx
     ))
 
 (package
@@ -48,14 +47,11 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio
-    cohttp-eio
     yojson
     ppx_yojson_conv
     logs
     ISO8601
+    httpx
     ))
 
 (package
@@ -65,12 +61,7 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio
-    cohttp-eio
-    yojson
-    ppx_yojson_conv
+    httpx
     logs
     ))
 
@@ -81,13 +72,10 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio
-    cohttp-eio
     yojson
     ppx_yojson_conv
     logs
+    httpx
     ))
 
 (package
@@ -96,15 +84,11 @@
   (depends
     (dune (>= 3.10))
     (ocaml (>= 5.1))
-    eio
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio
-    cohttp-eio
-    yojson
-    ppx_yojson_conv
-    logs
+    eio 
+    httpx
+    discord
     nextcloud
+    logs
     ))
 
 (package
@@ -114,15 +98,9 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
-    eio_main
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio
-    cohttp
-    cohttp-eio
     logs
     uri
-    http
+    httpx
     discord
     nidhoggr
     ))

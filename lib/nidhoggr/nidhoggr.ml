@@ -45,12 +45,12 @@ let run ~env ~application_id ~discord_token ~config =
       let path = Discord.Interaction.find_option_string_exn interaction "path" in
       run ~env ~config path;
       follow_up ("Done! " ^ path) ~handler:(function (response, _) ->
-        Logs.info (fun m -> m "[encode] resp: %a" Http.Response.pp response);
+        Logs.info (fun m -> m "[encode] resp: %a" Httpx.Response.pp response);
       );
     with e ->
       Logs.err Printexc.(fun m -> m "[encode] %s%s" (to_string e) (get_backtrace ()));
       follow_up ("Failed! check the log for more details.") ~handler:(function (response, body) ->
-        Logs.err (fun m -> m "[encode] resp: %a" Http.Response.pp response);
+        Logs.err (fun m -> m "[encode] resp: %a" Httpx.Response.pp response);
         Logs.err (fun m -> m "[encode] body: %s" @@ Eio.Flow.read_all body);
       );
     );
