@@ -4,11 +4,10 @@
   (libraries 
     eio
     eio_main
-    eio.unix
-    httpx
+    mirage-crypto-rng-eio
     logs.fmt
     logs.threaded
-    mirage-crypto-rng-eio
+    httpx
     discord
     nidhoggr
   )

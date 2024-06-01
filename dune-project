@@ -47,6 +47,7 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
+    mirage-crypto-rng-eio
     yojson
     ppx_yojson_conv
     logs
@@ -98,6 +99,8 @@
     (dune (>= 3.10))
     (ocaml (>= 5.1))
     eio
+    eio_main
+    mirage-crypto-rng-eio
     logs
     uri
     httpx

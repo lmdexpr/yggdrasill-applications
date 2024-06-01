@@ -10,6 +10,8 @@ depends: [
   "dune" {>= "3.10" & >= "3.10"}
   "ocaml" {>= "5.1"}
   "eio"
+  "eio_main"
+  "mirage-crypto-rng-eio"
   "logs"
   "uri"
   "httpx"
