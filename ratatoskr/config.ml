@@ -3,9 +3,12 @@ type t = {
   log_level : Logs.level option;
   discord : Discord.Config.t;
   niflheimr : Nidhoggr.Config.t;
+  eio_backend : string;
 }
 
 open struct
+  open Printf
+
   let with_prefix name = "RATATOSKR_" ^ name
 
   let getenv ~default name =
@@ -14,13 +17,18 @@ open struct
   let getenv_exn name =
     match with_prefix name |> Sys.getenv_opt with
     | Some x -> x
-    | None   -> failwith (Printf.sprintf "Environment variable %s is not set" name) 
+    | None   -> failwith @@ sprintf "Environment variable %s is not set" name
 
   let level_of_string = function
     | "debug"   -> Some Logs.Debug
     | "warning" -> Some Logs.Warning
     | "error"   -> Some Logs.Error
     | _         -> Some Logs.Info
+
+  let verify_env name value =
+    if getenv_exn name = value then value
+    else
+      failwith @@ sprintf "Environment variable %s is not set to the expected value '%s'" name value
 end
 
 let load () =
@@ -39,4 +47,5 @@ let load () =
       username = getenv_exn "NIFLHEIMR_USERNAME";
       password = getenv_exn "NIFLHEIMR_PASSWORD";
     };
+    eio_backend = verify_env "EIO_BACKEND" "posix";
   }
