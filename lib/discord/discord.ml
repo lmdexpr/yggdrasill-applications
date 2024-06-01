@@ -6,8 +6,8 @@ module Slash_command        = Slash_command
 
 let verify_key ~public_key headers body =
   let (let*) = Option.bind in
-  let* signature = Cohttp.Header.get headers "x-signature-ed25519" in
-  let* timestamp = Cohttp.Header.get headers "x-signature-timestamp" in
+  let* signature = Httpx.Header.get headers "x-signature-ed25519" in
+  let* timestamp = Httpx.Header.get headers "x-signature-timestamp" in
   try
     Logs.debug (fun m -> m "Verifying signature: %a" Hex.pp @@ `Hex signature);
     Logs.debug (fun m -> m "Timestamp: %a" Hex.pp @@ `Hex timestamp);

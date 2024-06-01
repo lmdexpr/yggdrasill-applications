@@ -2,13 +2,12 @@
   (public_name minio)
   (name minio)
   (libraries 
-    uri
     cohttp-eio
-    tls-eio
     mirage-crypto-rng-eio
-    logs
+    uri
     yojson
     ISO8601
+    logs
    )
   (preprocess (pps ppx_yojson_conv))
 )

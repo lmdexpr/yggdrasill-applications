@@ -46,7 +46,11 @@ let channel_message_with_source content =
 let deferred_channel_message_with_source =
   { type_ = DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE; data = None }
 
-let body_of_t t = yojson_of_t t |> Yojson.Safe.to_string |> Cohttp_eio.Body.of_string
+let body_of_t t = yojson_of_t t |> Yojson.Safe.to_string |> Httpx.Body.of_string
+
+let ok t = 
+  let headers = Httpx.Header.of_list [ "content-type", "application/json"] in
+  Httpx.Response.make ~status:`OK ~headers (), body_of_t t
 
 let follow_up ~env ~application_id ~discord_token ~interaction:Interaction.{ token; _ } msg =
   let uri = Printf.sprintf "webhooks/%s/%s" application_id token in

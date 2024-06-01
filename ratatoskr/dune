@@ -4,18 +4,11 @@
   (libraries 
     eio
     eio_main
-    eio.unix
-    cohttp
-    cohttp-eio
-    http
-    fmt
-    unix
+    mirage-crypto-rng-eio
     logs.fmt
     logs.threaded
-    tls-eio
-    mirage-crypto-rng-eio
+    httpx
     discord
     nidhoggr
   )
-  (preprocess (pps ppx_yojson_conv))
   (package ratatoskr))

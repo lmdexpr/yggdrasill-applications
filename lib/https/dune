@@ -1,9 +1,0 @@
-(library
-  (public_name https)
-  (name https)
-  (libraries 
-    cohttp-eio
-    tls-eio
-    ca-certs
-    mirage-crypto-rng-eio)
-)
