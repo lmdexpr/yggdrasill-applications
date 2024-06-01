@@ -31,7 +31,6 @@
   (depends
     (dune (>= 3.10))
     (ocaml (>= 5.1))
-    eio
     yojson
     ppx_yojson_conv
     logs
@@ -46,13 +45,13 @@
   (depends
     (dune (>= 3.10))
     (ocaml (>= 5.1))
-    eio
+    cohttp-eio
     mirage-crypto-rng-eio
+    uri
     yojson
     ppx_yojson_conv
-    logs
     ISO8601
-    httpx
+    logs
     ))
 
 (package
@@ -72,7 +71,8 @@
   (depends
     (dune (>= 3.10))
     (ocaml (>= 5.1))
-    eio
+    cohttp-eio
+    mirage-crypto-rng-eio
     yojson
     ppx_yojson_conv
     logs

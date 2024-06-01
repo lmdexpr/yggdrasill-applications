@@ -9,7 +9,6 @@ bug-reports: "https://github.com/lmdexpr/yggdrasill/issues"
 depends: [
   "dune" {>= "3.10" & >= "3.10"}
   "ocaml" {>= "5.1"}
-  "eio"
   "yojson"
   "ppx_yojson_conv"
   "logs"

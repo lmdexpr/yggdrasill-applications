@@ -9,13 +9,13 @@ bug-reports: "https://github.com/lmdexpr/yggdrasill/issues"
 depends: [
   "dune" {>= "3.10" & >= "3.10"}
   "ocaml" {>= "5.1"}
-  "eio"
+  "cohttp-eio"
   "mirage-crypto-rng-eio"
+  "uri"
   "yojson"
   "ppx_yojson_conv"
-  "logs"
   "ISO8601"
-  "httpx"
+  "logs"
   "odoc" {with-doc}
 ]
 build: [
