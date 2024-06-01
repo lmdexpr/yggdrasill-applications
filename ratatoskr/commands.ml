@@ -1,29 +1,31 @@
 module Ratatoskr_config = Config
-open Discord
 
 open struct
-  let ping = Slash_command.make
+  open Discord.Slash_command
+  open Discord.Interaction_response
+
+  let ping = make
     ~name:"ping"
-    ~type_:Slash_command.CHAT_INPUT
+    ~type_:CHAT_INPUT
     ~description:"reply Pong!"
     @@ fun _ -> 
-    Interaction_response.channel_message_with_source "Pong!"
+    channel_message_with_source "Pong!"
 
-  let encode = Slash_command.make
+  let encode = make
     ~name:"encode"
-    ~type_:Slash_command.CHAT_INPUT
+    ~type_:CHAT_INPUT
     ~description:"encode a zip file containing flac files to a mp3 file."
     ~options:[
-      Slash_command.make_opt
+      make_opt
         ~name:"path"
-        ~type_:Slash_command.STRING
+        ~type_:STRING
         ~description:"Path of a zip file containing flac files."
         ~required:true
         ();
     ]
     @@ fun interaction ->
     Nidhoggr.submit interaction;
-    Interaction_response.deferred_channel_message_with_source
+    deferred_channel_message_with_source
 
   let all = [ ping; encode; ]
 end
@@ -36,27 +38,23 @@ let register_all ~env ~application_id ~discord_token guild_ids =
     let code = Httpx.(Response.status resp |> Status.to_int) in
     if code < 300 then
       Logs.info  (fun m -> m "register_all: ok w/ %d" code)
-    else begin
+    else (
       Logs.warn (fun m -> m "register_all: failed w/ %d" code);
       Logs.warn (fun m -> m "register_all: body: %s" body);
-      end
-  in
-  let register guild_id command =
-    try
-      Slash_command.register ~env ~application_id ~discord_token ~guild_id command ~handler;
-    with e ->
-      let msg   = Printexc.to_string e
-      and stack = Printexc.get_backtrace () in
-      Logs.err (fun m -> m "register_all: %s%s" msg stack);
+    )
   in
   guild_ids |> List.iter (fun guild_id ->
     Logs.info (fun m -> m "register_all: guild id is %s" guild_id);
-    List.iter (register guild_id) all;
+    all |> List.iter (Discord.Slash_command.register ~env ~application_id ~discord_token ~guild_id ~handler);
   );
   all
 
-let find_handler all (interaction: Interaction.t) =
-  let (let*) = Option.bind in
+let match_ ~ok ~ng all (interaction: Discord.Interaction.t) =
+  let (let*)   = Option.bind in
+  match
   let* data    = interaction.data in
-  let* command = List.find_opt (fun Slash_command.{ name; _ } -> name = data.name) all in
+  let* command = List.find_opt (fun Discord.Slash_command.{ name; _ } -> name = data.name) all in
   Some command.handler
+  with
+  | Some handler -> ok handler
+  | None         -> ng ()

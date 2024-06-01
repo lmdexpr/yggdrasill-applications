@@ -28,7 +28,7 @@ open struct
     Nextcloud.put    ~env ~config ~cwd mp3_filename output_path;
     Nextcloud.delete ~env ~config input_path
 
-  let stream = Eio.Stream.create 1
+  let stream = Eio.Stream.create 5
 end
 
 let submit = Eio.Stream.add stream
