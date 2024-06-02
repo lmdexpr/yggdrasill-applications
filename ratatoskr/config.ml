@@ -9,13 +9,17 @@ type t = {
 open struct
   open Printf
 
-  let with_prefix name = "RATATOSKR_" ^ name
+  let with_prefix ?prefix name = 
+    let prefix = Option.value prefix ~default:"RATATOSKR" in
+    let prefix = if prefix = "" then "" else prefix ^ "_" in
+    prefix ^ name
 
-  let getenv ~default name =
-    with_prefix name |> Sys.getenv_opt |> Option.value ~default
+  let getenv ?prefix ~default name =
+    with_prefix ?prefix name |> Sys.getenv_opt |> Option.value ~default
 
-  let getenv_exn name =
-    match with_prefix name |> Sys.getenv_opt with
+  let getenv_exn ?prefix name =
+    let name = with_prefix ?prefix name in
+    match name |> Sys.getenv_opt with
     | Some x -> x
     | None   -> failwith @@ sprintf "Environment variable %s is not set" name
 
@@ -25,8 +29,8 @@ open struct
     | "error"   -> Some Logs.Error
     | _         -> Some Logs.Info
 
-  let verify_env name value =
-    if getenv_exn name = value then value
+  let verify_env ?prefix name value =
+    if getenv_exn ?prefix name = value then value
     else
       failwith @@ sprintf "Environment variable %s is not set to the expected value '%s'" name value
 end
@@ -47,5 +51,5 @@ let load () =
       username = getenv_exn "NIFLHEIMR_USERNAME";
       password = getenv_exn "NIFLHEIMR_PASSWORD";
     };
-    eio_backend = verify_env "EIO_BACKEND" "posix";
+    eio_backend = verify_env ~prefix:"" "EIO_BACKEND" "posix";
   }
