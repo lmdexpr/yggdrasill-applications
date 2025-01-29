@@ -1,4 +1,4 @@
-(lang dune 3.10)
+(lang dune 3.16)
 
 (name yggdrasill)
 
@@ -10,12 +10,21 @@
 
 (generate_opam_files true)
 
+(pin
+  (url "git+https://github.com/ahrefs/ocaml-sodium#734eccbb47e7545a459a504188f1da8dc0bd018e")
+  (package (name sodium))
+ )
+
+(pin
+  (url "git+https://github.com/lmdexpr/discord.ml#6f38cfc7e410de4db616c225a52c00e3b2f60398")
+  (package (name discord))
+ )
+
 (package
   (name httpx)
   (synopsis "HTTP wrapper")
   (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
+    (ocaml (>= 5.3))
     eio
     tls-eio
     ca-certs
@@ -26,27 +35,12 @@
     ))
 
 (package
-  (name discord)
-  (synopsis "Discord library")
-  (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
-    yojson
-    ppx_yojson_conv
-    logs
-    hex
-    sodium
-    httpx
-    ))
-
-(package
   (name minio)
   (synopsis "MinIO library")
   (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
+    (ocaml (>= 5.3))
     cohttp-eio
-    mirage-crypto-rng-eio
+    digestif
     uri
     yojson
     ppx_yojson_conv
@@ -58,8 +52,8 @@
   (name nextcloud)
   (synopsis "Nextcloud library")
   (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
+    dune
+    (ocaml (>= 5.3))
     eio
     httpx
     logs
@@ -69,10 +63,9 @@
   (name elasticmq)
   (synopsis "ElasticMQ library")
   (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
+    (ocaml (>= 5.3))
     cohttp-eio
-    mirage-crypto-rng-eio
+    digestif
     yojson
     ppx_yojson_conv
     logs
@@ -83,8 +76,7 @@
   (name nidhoggr)
   (synopsis "Encoder on yggdrasill")
   (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
+    (ocaml (>= 5.3))
     eio 
     httpx
     discord
@@ -96,8 +88,8 @@
   (name ratatoskr)
   (synopsis "Discord bot on yggdrasill")
   (depends
-    (dune (>= 3.10))
-    (ocaml (>= 5.1))
+    (dune (< 3.17))
+    (ocaml (>= 5.3))
     eio
     eio_main
     mirage-crypto-rng-eio

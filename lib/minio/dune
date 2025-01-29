@@ -3,7 +3,7 @@
   (name minio)
   (libraries 
     cohttp-eio
-    mirage-crypto-rng-eio
+    digestif.c
     uri
     yojson
     ISO8601

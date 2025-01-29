@@ -1,0 +1,4 @@
+pin-depends: [
+  [ "sodium.dev" "git+https://github.com/ahrefs/ocaml-sodium#734eccbb47e7545a459a504188f1da8dc0bd018e" ]
+  [ "discord.dev" "git+https://github.com/lmdexpr/discord.ml#6f38cfc7e410de4db616c225a52c00e3b2f60398" ]
+]

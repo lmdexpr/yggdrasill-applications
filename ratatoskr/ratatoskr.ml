@@ -10,6 +10,7 @@ let Config.{
 } as config = Config.load ()
 
 open Discord
+open Httpx
 
 let () =
   Logs.set_reporter (Logs_fmt.reporter ());
@@ -17,33 +18,42 @@ let () =
   Logs_threaded.enable ();
   Logs.Src.set_level Cohttp_eio.src log_level
 
-let go all request body =
-  let headers = Httpx.Request.headers request in
-  let verified = 
-    Option.is_some @@ verify_key ~public_key headers body 
-  in
-  if not verified then Httpx.empty_response ~status:`Unauthorized
-  else
-    let body = Interaction.of_string body in
-    match body.type_ with
-    | PING                -> Interaction_response.(ok pong)
-    | APPLICATION_COMMAND ->
-      Commands.match_ all body
-        ~ok:(fun handler -> Interaction_response.ok (handler body))
-        ~ng:(fun ()      -> Httpx.empty_response ~status:`Not_found)
-    | _ -> Httpx.empty_response ~status:`Service_unavailable
+let ok t =
+  let headers, body = Interaction_response.ok t in
+  Response.make ~status:`OK ~headers:Header.(of_list headers) (),
+  Body.of_string body
 
-let run env =
-  let all = Commands.register_all ~env ~application_id ~discord_token guild_ids in
-  Httpx.Server.run ~env ~port 
-    ~callback:Httpx.(fun _socket request body -> 
-    match Request.(meth request, resource request, has_body request) with
-    | `POST, "/", `Yes -> go all request Eio.Flow.(read_all body)
-    | `POST, "/", _    -> empty_response ~status:`Bad_request
-    | `POST,   _, _    -> empty_response ~status:`Not_found
-    | _                -> empty_response ~status:`Method_not_allowed
+let go all body =
+  match Interaction.of_string body with
+  | ({ type_ = APPLICATION_COMMAND; data = Some data; _ } as interaction) -> 
+    (match
+      List.find_opt (fun Slash_command.{ name; _ } -> name = data.name) all
+      |> Option.map (fun Slash_command.{ handler; _ } -> handler)
+      with
+      | Some handler -> ok (handler interaction)
+      | None         -> bad_request ()
     )
-    ~on_error:(fun ex -> Logs.warn @@ fun f -> f "%a" Eio.Exn.pp ex)
+  | { type_ = APPLICATION_COMMAND; _ } -> bad_request ()
+  | { type_ = PING; _ }                -> ok Interaction_response.pong
+  | _                                  -> service_unavailable ()
+
+let go all req body =
+  let headers = Header.to_list @@ Request.headers req in
+  match verify_key ~public_key headers body with
+  | Some _ -> go all body
+  | None   -> unauthorized ()
+
+let serve env =
+  let all = Commands.register_all ~env ~application_id ~discord_token guild_ids in
+  Server.run ~env ~port 
+    ~on_error:(fun ex -> Logs.err (fun f -> f "%a" Eio.Exn.pp ex))
+    ~callback:(fun _socket req body ->
+      match Request.(meth req, resource req, has_body req) with
+      | `POST, "/", `Yes -> go all req Eio.Flow.(read_all body)
+      | `POST, "/", _    -> bad_request ()
+      | `POST,   _, _    -> not_found ()
+      | _                -> method_not_allowed ()
+    )
 
 let () =
   Eio_main.run @@ fun env ->
@@ -51,5 +61,5 @@ let () =
 
   let spawn = Eio.Domain_manager.run env#domain_mgr in
   Eio.Fiber.both
-    (fun () -> spawn @@ run env)
+    (fun () -> spawn @@ serve env)
     (fun () -> spawn @@ Nidhoggr.run ~env ~application_id ~discord_token ~config:config.niflheimr)

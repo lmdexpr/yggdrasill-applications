@@ -1,14 +1,18 @@
 open struct
+  (* TODO: error handling *)
   let authenticator = Ca_certs.authenticator () |> Result.get_ok;;
-  let connect_via_tls url socket =
-    let tls_config = Tls.Config.client ~authenticator () in
-    let host =
-        Uri.host url
-        |> Option.map (fun x -> Domain_name.(host_exn (of_string_exn x)))
-    in
-    Tls_eio.client_of_flow ?host tls_config socket
 
-  let https = Option.some connect_via_tls
+  let https =
+    Tls.Config.client ~authenticator ()
+    |> Result.to_option
+    |> Option.map (fun tls_config ->
+      fun uri raw ->
+      let host =
+        Uri.host uri
+        |> Option.map (fun x -> Domain_name.(host_exn (of_string_exn x)))
+      in
+      Tls_eio.client_of_flow ?host tls_config raw
+    )
 end
 
 module Header = Cohttp.Header
@@ -39,16 +43,21 @@ let handle_error ~err_msg response =
     failwith err_msg
   )
 
-let request ~env ~host ~headers ~path ~handler ?(query=[]) ?body meth =
-  let uri    = Uri.make ~scheme:"https" ~host ~path ~query () in
-  let body   = Option.map Body.of_string body in
-  let client = Client.make ~https Eio.Stdenv.(net env) in
+let request ~env ~host ~headers ~path ?(query=[]) ?body meth =
+  let headers = Header.of_list headers in
+  let uri     = Uri.make ~scheme:"https" ~host ~path ~query () in
+  let body    = Option.map Body.of_string body in
+  let client  = Client.make ~https Eio.Stdenv.(net env) in
   Logs.debug (fun m -> m "Headers: %a" Http.Header.pp_hum headers);
   Eio.Switch.run @@ fun sw ->
   Client.call ~sw ~headers client meth uri ?body
-  |> handler
 
 let empty_response ~status = Response.make ~status (), Body.of_string ""
+let not_found ()           = empty_response ~status:`Not_found
+let unauthorized ()        = empty_response ~status:`Unauthorized
+let bad_request ()         = empty_response ~status:`Bad_request
+let service_unavailable () = empty_response ~status:`Service_unavailable
+let method_not_allowed ()  = empty_response ~status:`Method_not_allowed
 
 module Infix = struct
   let (/) = Filename.concat

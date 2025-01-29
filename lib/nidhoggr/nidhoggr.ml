@@ -35,21 +35,27 @@ let submit = Eio.Stream.add stream
 
 let run ~env ~application_id ~discord_token ~config = 
   Logs.info (fun f -> f "Nidhoggr ready");
+  let follow_up interaction msg ~handler =
+    match
+    Discord.Interaction_response.follow_up ~application_id ~discord_token ~interaction msg
+    with
+    | _ -> ()
+    | effect (Discord.Effect.Post_request {host; headers; path; body}), k -> 
+      handler @@ Httpx.request ~env `POST ~headers ~host ~path ~body;
+      Effect.Deep.continue k ""
+  in
   let rec go () =
     let interaction = Eio.Stream.take stream in
-    let follow_up msg =
-      Discord.Interaction_response.follow_up ~env ~application_id ~discord_token ~interaction msg
-    in
     Logs.info (fun m -> m "[encode] start");
     (try
       let path = Discord.Interaction.find_option_string_exn interaction "path" in
       run ~env ~config path;
-      follow_up ("Done! " ^ path) ~handler:(function (response, _) ->
+      follow_up interaction ("Done! " ^ path) ~handler:(function (response, _) ->
         Logs.info (fun m -> m "[encode] resp: %a" Httpx.Response.pp response);
       );
     with e ->
       Logs.err Printexc.(fun m -> m "[encode] %s%s" (to_string e) (get_backtrace ()));
-      follow_up ("Failed! check the log for more details.") ~handler:(function (response, body) ->
+      follow_up interaction "Failed! check the log for more details." ~handler:(function (response, body) ->
         Logs.err (fun m -> m "[encode] resp: %a" Httpx.Response.pp response);
         Logs.err (fun m -> m "[encode] body: %s" @@ Eio.Flow.read_all body);
       );

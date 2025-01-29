@@ -7,8 +7,8 @@ license: "MIT"
 homepage: "https://github.com/lmdexpr/yggdrasill"
 bug-reports: "https://github.com/lmdexpr/yggdrasill/issues"
 depends: [
-  "dune" {>= "3.10" & >= "3.10"}
-  "ocaml" {>= "5.1"}
+  "dune" {>= "3.16"}
+  "ocaml" {>= "5.3"}
   "eio"
   "httpx"
   "discord"
@@ -31,3 +31,7 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/lmdexpr/yggdrasill.git"
+pin-depends: [
+  [ "sodium.dev" "git+https://github.com/ahrefs/ocaml-sodium#734eccbb47e7545a459a504188f1da8dc0bd018e" ]
+  [ "discord.dev" "git+https://github.com/lmdexpr/discord.ml#6f38cfc7e410de4db616c225a52c00e3b2f60398" ]
+]
