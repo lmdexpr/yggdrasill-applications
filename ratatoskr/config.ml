@@ -9,8 +9,10 @@ type t = {
 open struct
   open Printf
 
+  let default_prefix = "RATATOSKR"
+
   let with_prefix ?prefix name = 
-    let prefix = Option.value prefix ~default:"RATATOSKR" in
+    let prefix = Option.value prefix ~default:default_prefix in
     let prefix = if prefix = "" then "" else prefix ^ "_" in
     prefix ^ name
 
@@ -35,21 +37,24 @@ open struct
       failwith @@ sprintf "Environment variable %s is not set to the expected value '%s'" name value
 end
 
-let load () =
-  {
-    port      = getenv ~default:"8080" "PORT" |> int_of_string;
-    log_level = getenv ~default:"info" "LOG_LEVEL" |> level_of_string;
-    discord   = {
-      public_key     = getenv_exn "PUBLIC_KEY";
-      discord_token  = getenv_exn "DISCORD_TOKEN";
-      application_id = getenv_exn "APPLICATION_ID";
-      guild_ids      = getenv ~default:"" "GUILD_IDS" |> String.split_on_char ',' |> List.filter (fun x -> x <> "");
-    };
-    niflheimr = Nidhoggr.Config.{
-      host = getenv ~default:"localhost" "NIFLHEIMR_HOST";
+let load () = {
+  port      = getenv ~default:"8080" "PORT" |> int_of_string;
+  log_level = getenv ~default:"info" "LOG_LEVEL" |> level_of_string;
 
-      username = getenv_exn "NIFLHEIMR_USERNAME";
-      password = getenv_exn "NIFLHEIMR_PASSWORD";
-    };
-    eio_backend = verify_env ~prefix:"" "EIO_BACKEND" "posix";
-  }
+  discord = Discord.Config.load ~prefix:default_prefix ();
+
+  niflheimr = Nidhoggr.Config.{
+    host     = getenv ~default:"localhost" "NIFLHEIMR_HOST";
+    username = getenv_exn "NIFLHEIMR_USERNAME";
+    password = getenv_exn "NIFLHEIMR_PASSWORD";
+  };
+
+  eio_backend = verify_env ~prefix:"" "EIO_BACKEND" "posix";
+}
+
+let load () =
+  let open Effect.Deep in
+  let open Discord.Effect in
+  match load () with
+  | effect (Get_string key), k -> continue k @@ getenv_exn key
+  | x -> x

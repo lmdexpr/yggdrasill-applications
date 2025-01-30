@@ -8,7 +8,7 @@ open struct
 
   let ksrt (k, _) (k', _) = String.compare k k'
 
-  let hmac_sha256 key v = Mirage_crypto.Hash.(mac `SHA256 ~key (Cstruct.of_string v))
+  let hmac_sha256 key v = Digestif.SHA256.(hmac_string ~key v |> to_raw_string)
 
   let iso8601date     = Format.asprintf "%a" pp_date_basic
   let iso8601datetime = Format.asprintf "%aZ" pp_datetime_basic
@@ -34,24 +34,6 @@ open struct
       done;
       Buffer.contents buf
 
-    let hexa = "0123456789abcdef"
-
-    let of_char c =
-      let x = int_of_char c in
-      (hexa.[x lsr 4], hexa.[x land 0xf])
-
-    let cstruct_to_hex_string cs =
-      let open Cstruct in
-      let n = cs.len in
-      let buf = Buffer.create (n * 2) in
-      for i = 0 to n - 1 do
-        let c = cs.buffer.{cs.off + i} in
-        let x, y = of_char c in
-        Buffer.add_char buf x;
-        Buffer.add_char buf y
-      done;
-      Buffer.contents buf
-
     let encode_query_string uri =
       Uri.query uri
       |> List.sort ksrt
@@ -59,8 +41,7 @@ open struct
       |> Uri.encoded_of_query
   end
 
-  let digest s =
-    Compat.cstruct_to_hex_string Mirage_crypto.Hash.(digest `SHA256 (Cstruct.of_string s))
+  let digest s = Digestif.SHA256.(digest_string s |> to_hex)
 
   let hash_payload = function
     | None   -> digest ""
@@ -89,7 +70,7 @@ open struct
     sprintf "%s/%s/%s/%s/aws4_request" access_key (iso8601date now) region service
 
   let signing_key Config.{ secret_key; region; _ } now =
-    let key = Cstruct.of_string @@ "AWS4" ^ secret_key in
+    let key = "AWS4" ^ secret_key in
     let key = hmac_sha256 key @@ iso8601date now in
     let key = hmac_sha256 key region in
     let key = hmac_sha256 key service in
@@ -113,7 +94,7 @@ let headers ~now ~config ?body http_method uri headers =
   let credential      = credential     config now in
   let signing_key     = signing_key    config now in
   let string_to_sign  = string_to_sign config now canonical_request in
-  let signature       = hmac_sha256    signing_key string_to_sign |> Compat.cstruct_to_hex_string in
+  let signature       = hmac_sha256    signing_key string_to_sign in
   Http.Header.add_list headers
   [
     "Authorization", authorizatoin credential signed_headers signature;

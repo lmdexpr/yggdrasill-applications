@@ -1,96 +1,62 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    opam-repository = { url = "github:ocaml/opam-repository"; flake = false; };
-
     flake-utils.url = "github:numtide/flake-utils";
 
-    opam-nix = {
-      url = "github:tweag/opam-nix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-        opam-repository.follows = "opam-repository";
-      };
-    };
+    opam-nix.url = "github:tweag/opam-nix";
   };
-  outputs = { self, flake-utils, opam-nix, nixpkgs, opam-repository, ... }:
+  outputs = { nixpkgs, flake-utils, opam-nix, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        on = opam-nix.lib.${system};
-        
-        src = ./.;
-        localNames =
-          with builtins;
-          filter
-            (f: !isNull f)
-            (map
-              (f:
-                let f' = match "(.*)\.opam$" f; in
-                if isNull f' then null else elemAt f' 0)
-              (attrNames (readDir src)));
+        on   = opam-nix.lib.${system};
 
-        localPackagesQuery =
-          with builtins; listToAttrs (map
-            (p: {
-              name = p;
-              value = "*";
-            })
-            localNames);
+        package = "ratatoskr";
+
+        src = ./.;
+        localNames = with builtins;
+          let
+            files      = attrNames (readDir src);
+            opam_files = map (match "(.*)\.opam$") files;
+            non_nulls  = filter (f: !isNull f);
+          in 
+            map (f: elemAt f 0) (non_nulls opam_files);
+
+        localPackagesQuery = with builtins; 
+          listToAttrs (map (p: { name = p; value = "*"; }) localNames);
 
         devPackagesQuery = {
           ocaml-lsp-server = "*";
+          ocamlformat = "*";
           utop = "*";
         };
 
         query = devPackagesQuery // localPackagesQuery;
 
-        overlay = self: super:
-          with builtins;
-          let
-            super' = mapAttrs
-              (p: _:
-                if hasAttr "passthru" super.${p} && hasAttr "pkgdef" super.${p}.passthru
-                then super.${p}.overrideAttrs (_: { opam__with_test = "false"; opam__with_doc = "false"; })
-                else super.${p})
-              super;
-            local' = mapAttrs
-              (p: _:
-                super.${p}.overrideAttrs (_: {
-                  doNixSupport = false;
-                }))
-              localPackagesQuery;
-          in
-          super' // local';
-
-        scope =
-          let
-            scp = on.buildOpamProject'
-              {
-                inherit pkgs;
-                resolveArgs = { with-test = true; with-doc = true; };
-                pinDepends = true;
-              }
-              src
-              query;
-          in
-          scp.overrideScope overlay;
+        localPackages =
+          on.buildDuneProject
+          {
+            inherit pkgs;
+            resolveArgs = { with-test = false; with-doc = false; };
+            pinDepends = true;
+          }
+          package
+          src
+          query;
 
         devPackages = builtins.attrValues
-          (pkgs.lib.getAttrs (builtins.attrNames devPackagesQuery) scope);
-      in {
+          (pkgs.lib.getAttrs (builtins.attrNames devPackagesQuery) localPackages);
+      in
+      {
         legacyPackages = pkgs;
-
-        packages = with builtins; listToAttrs (map (p: {
-          name = p;
-          value = scope.${p};
-        }) localNames);
+        packages = {
+          default = localPackages.ratatoskr;
+        };
 
         devShells.default =
           pkgs.mkShell {
-            inputsFrom = builtins.map (p: scope.${p}) localNames;
-            buildInputs = devPackages ++ [ pkgs.nil pkgs.nixpkgs-fmt ];
+            inputsFrom  = builtins.map (p: localPackages.${p}) localNames;
+            buildInputs = devPackages ++ (with pkgs; [ nil nixpkgs-fmt ]);
           };
       });
 }
