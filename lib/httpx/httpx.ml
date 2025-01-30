@@ -15,11 +15,15 @@ open struct
     )
 end
 
-module Header = Cohttp.Header
-
 module Status   = Http.Status
 module Request  = Http.Request
 module Response = Http.Response
+
+module Header = struct 
+  include Cohttp.Header
+
+  let list_of_request req = Request.headers req |> to_list
+end
 
 module Body   = Cohttp_eio.Body
 module Client = Cohttp_eio.Client

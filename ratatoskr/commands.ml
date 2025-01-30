@@ -26,15 +26,16 @@ let encode = make
   Nidhoggr.submit interaction;
   deferred_channel_message_with_source
 
+let all = [ 
+  ping; 
+  encode; 
+]
+
 let register_all ~env ~application_id ~discord_token guild_ids =
-  let all = [ 
-    ping; 
-    encode; 
-  ] in
   guild_ids |> List.iter (fun guild_id ->
     Logs.info (fun m -> m "register_all: guild id is %s" guild_id);
     all |> List.iter (fun com -> 
-      match Discord.Slash_command.register ~application_id ~discord_token ~guild_id com with
+      match register ~application_id ~discord_token ~guild_id com with
       | _ -> ()
       | effect (Discord.Effect.Post_request {host; headers; path; body}), k -> 
         let resp, body = Httpx.request ~env `POST ~headers ~host ~path ~body in
@@ -50,17 +51,6 @@ let register_all ~env ~application_id ~discord_token guild_ids =
           Logs.warn (fun m -> m "register_all: body: %s" body);
         );
 
-        Effect.Deep.continue k ""
+        Effect.Deep.continue k ()
     );
-  );
-  all
-
-let match_ ~ok ~ng all (interaction: Discord.Interaction.t) =
-  let (let*)   = Option.bind in
-  match
-  let* data    = interaction.data in
-  let* command = List.find_opt (fun Discord.Slash_command.{ name; _ } -> name = data.name) all in
-  Some command.handler
-  with
-  | Some handler -> ok handler
-  | None         -> ng ()
+  )

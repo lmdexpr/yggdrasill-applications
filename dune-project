@@ -16,7 +16,7 @@
  )
 
 (pin
-  (url "git+https://github.com/lmdexpr/discord.ml#6f38cfc7e410de4db616c225a52c00e3b2f60398")
+  (url "git+https://github.com/lmdexpr/discord.ml#5325d95d12a2ab97c93d3ff45c3b12dccd96f491")
   (package (name discord))
  )
 

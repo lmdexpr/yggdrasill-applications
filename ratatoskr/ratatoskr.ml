@@ -18,41 +18,28 @@ let () =
   Logs_threaded.enable ();
   Logs.Src.set_level Cohttp_eio.src log_level
 
-let ok t =
-  let headers, body = Interaction_response.ok t in
-  Response.make ~status:`OK ~headers:Header.(of_list headers) (),
-  Body.of_string body
-
-let go all body =
-  match Interaction.of_string body with
-  | ({ type_ = APPLICATION_COMMAND; data = Some data; _ } as interaction) -> 
-    (match
-      List.find_opt (fun Slash_command.{ name; _ } -> name = data.name) all
-      |> Option.map (fun Slash_command.{ handler; _ } -> handler)
-      with
-      | Some handler -> ok (handler interaction)
-      | None         -> bad_request ()
-    )
-  | { type_ = APPLICATION_COMMAND; _ } -> bad_request ()
-  | { type_ = PING; _ }                -> ok Interaction_response.pong
-  | _                                  -> service_unavailable ()
-
-let go all req body =
-  let headers = Header.to_list @@ Request.headers req in
-  match verify_key ~public_key headers body with
-  | Some _ -> go all body
-  | None   -> unauthorized ()
+let callback req body =
+  match Request.(meth req, resource req, has_body req) with
+  | `POST, "/", `Yes -> Slash_command.dispatch ~public_key Commands.all Header.(list_of_request req) Eio.Flow.(read_all body)
+  | `POST, "/", _    -> `Bad_request
+  | `POST,   _, _    -> `Not_found
+  | _                -> `Method_not_allowed
 
 let serve env =
-  let all = Commands.register_all ~env ~application_id ~discord_token guild_ids in
+  Commands.register_all ~env ~application_id ~discord_token guild_ids;
   Server.run ~env ~port 
     ~on_error:(fun ex -> Logs.err (fun f -> f "%a" Eio.Exn.pp ex))
     ~callback:(fun _socket req body ->
-      match Request.(meth req, resource req, has_body req) with
-      | `POST, "/", `Yes -> go all req Eio.Flow.(read_all body)
-      | `POST, "/", _    -> bad_request ()
-      | `POST,   _, _    -> not_found ()
-      | _                -> method_not_allowed ()
+      match callback req body with
+      | `Bad_request         -> bad_request ()
+      | `Unauthorized        -> unauthorized ()
+      | `Service_unavailable -> service_unavailable ()
+      | `Not_found           -> not_found ()
+      | `Method_not_allowed  -> method_not_allowed ()
+      | `Ok t                ->
+        let headers, body = Interaction_response.ok t in
+        Response.make ~status:`OK ~headers:Header.(of_list headers) (),
+        Body.of_string body
     )
 
 let () =
